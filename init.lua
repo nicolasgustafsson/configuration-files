@@ -50,6 +50,7 @@ require('packer').startup(function(use)
 	use 'nvim-telescope/telescope-dap.nvim' --telescope dap integration
 	use 'theHamsta/nvim-dap-virtual-text' --virtual text for dap
 	use 'rcarriga/nvim-dap-ui' --dap UI
+	use({'catppuccin/nvim', as = "catpppuccin"}) --pastel theme
 end)
 
 --diagnose lsp errors
@@ -93,7 +94,7 @@ vim.o.completeopt = 'menuone,noselect'
 require('lualine').setup {
   options = {
     icons_enabled = false,
-    theme = 'nord',
+    theme = 'nightfly',
     component_separators = '|',
     section_separators = '',
   },
@@ -343,14 +344,14 @@ cmp.setup {
     --{ name = 'luasnip' },
   },
 }
---{|
---()
---[
---
---onenord setup
-require('onenord').setup({
-  theme = nil
-});
+
+--Theming
+require('catppuccin').setup({})
+-- require('onenord').setup({
+--   theme = nil
+-- });
+vim.g.catppuccin_flavour = "frappe"
+vim.cmd[[colorscheme catppuccin]]
 
 --aerial setup
 -- require('aerial').setup({
