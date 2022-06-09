@@ -16,7 +16,7 @@ require('packer').startup(function(use)
 	use 'numToStr/Comment.nvim' -- "gc" to comment visual regions/lines
 	--use 'ludovicchabant/vim-gutentags' -- Automatic tags management - Doesn't work on cpp files for me :///
 	-- UI to select things (files, grep results, open buffers...)
-	use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim' } }
+	use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim', 'BurntSushi/ripgrep' } }
 	use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
 	use 'nvim-lualine/lualine.nvim' -- Fancier statusline
 	-- Add indentation guides even on blank lines
@@ -51,6 +51,9 @@ require('packer').startup(function(use)
 	use 'theHamsta/nvim-dap-virtual-text' --virtual text for dap
 	use 'rcarriga/nvim-dap-ui' --dap UI
 	use({'catppuccin/nvim', as = "catpppuccin"}) --pastel theme
+	use 'edluffy/specs.nvim' --Highlight on jumps
+	use {"akinsho/toggleterm.nvim", tag = 'v1.*'} --floating terminal window
+	use {'folke/trouble.nvim', requires = "kyazdani42/nvim-web-devicons"} --diagnostics menu
 end)
 
 --diagnose lsp errors
@@ -162,13 +165,15 @@ vim.keymap.set('n', '<leader><space>', require('telescope.builtin').find_files)
 vim.keymap.set('n', 'ts', require('telescope.builtin').lsp_dynamic_workspace_symbols)
 vim.keymap.set('n', 'tb', require('telescope.builtin').current_buffer_fuzzy_find)
 vim.keymap.set('n', 'tn', require('telescope.builtin').lsp_definitions)
-vim.keymap.set('n', 'tf', function()
-	require('telescope.builtin').lsp_document_symbols {symbols = {'function'}}
+vim.keymap.set('n', 'tm', function()
+	require('telescope.builtin').lsp_document_symbols {symbols = {'function', 'method'}}
 end)
 vim.keymap.set('n', 'tr', require('telescope.builtin').lsp_references)
 vim.keymap.set('n', 'tl', require('telescope.builtin').buffers)
 vim.keymap.set('n', 'to', "<cmd>ClangdSwitchSourceHeader<cr>")
 vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles)
+vim.keymap.set('n', 'tq', require('telescope.builtin').grep_string)
+vim.keymap.set('n', 'tf', require('telescope.builtin').live_grep)
 
 --Add build shortcuts
 vim.keymap.set('n', 'lb', require('cmake').build)
@@ -176,6 +181,8 @@ vim.keymap.set('n', 'lr', require('cmake').build_and_run)
 vim.keymap.set('n', 'lc', require('cmake').clean)
 vim.keymap.set('n', 'ld', require('cmake').build_and_debug)
 vim.keymap.set('n', 'lx', require('cmake').cancel)
+vim.keymap.set('n', '<C-t>', "<cmd>:ToggleTerm<cr>");
+vim.keymap.set('t', '<C-t>', "<cmd>:ToggleTerm<cr>");
 
 --Add debug shortcuts
 vim.keymap.set('n', ')', "<cmd>:DapStepOver<cr>")
@@ -241,7 +248,7 @@ require('nvim-treesitter.configs').setup {
 --vim.keymap.set('n', 'te', vim.diagnostic.open_float)
 vim.keymap.set('n', 'tp', vim.diagnostic.goto_prev)
 vim.keymap.set('n', 'te', vim.diagnostic.goto_next)
-vim.keymap.set('n', 'tq', vim.diagnostic.setloclist)
+-- vim.keymap.set('n', 'tq', vim.diagnostic.setloclist)
 --vim.keymap.set('n', 'jb', require(''))
 
 -- LSP settings
@@ -364,7 +371,7 @@ vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {f
 
 --Hop setup
 require('hop').setup();
-vim.api.nvim_set_keymap('n', 'f', "<cmd>lua require'hop'.hint_char1({  })<cr>", {})
+vim.api.nvim_set_keymap('n', 'f', "<cmd>lua require'hop'.hint_char1({ multi_windows = true })<cr>", {})
 vim.api.nvim_set_keymap('o', 'f', "<cmd>lua require'hop'.hint_char1({ inclusive_jump = true })<cr>", {})
 
 --Tabbing keymaps
@@ -483,8 +490,8 @@ end
 dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
---cmake
 
+--cmake
 require('cmake').setup({
   dap_configuration = {
     type = 'codelldb',
@@ -494,8 +501,9 @@ require('cmake').setup({
     runInTerminal = false,
 	terminal = 'console',
   },
-  dap_open_command = false,
-  quickfix_only_on_error = true
+  dap_open_command = false, 
+  quickfix_only_on_error = false,
+  quickfix_height = 1,
 })
 
 dap.configurations.cpp = {
@@ -515,5 +523,16 @@ dap.configurations.cpp = {
 
     --postRunCommands = {'process handle -p true -s false -n false SIGWINCH'}
   },}
+
+require('specs').setup{min_jump = 2, popup = {inc_ms = 10, blend = 10, fader = require('specs').linear_fader}}
+
+require("toggleterm").setup({direction = 'float'})
+
+require("trouble").setup(
+{
+	height = 15,
+	auto_open = true,
+});
+
 --nvim-projectconfig should be last, to make project specific commands happen after this
 require('nvim-projectconfig').setup({autocmd = true});
